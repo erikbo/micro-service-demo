@@ -1,0 +1,4 @@
+server:
+  port: 8082
+userServiceUrl: http://user-service:8083
+rssServiceUrl: http://rss-service:8081

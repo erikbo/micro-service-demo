@@ -1,0 +1,14 @@
+spring:
+  jpa:
+    database: POSTGRESQL
+    hibernate:
+      ddl-auto: create-drop
+  database:
+    driverClassName: org.postgresql.Driver
+  datasource:
+    platform: postgres
+    url: jdbc:postgresql://some-postgres:5432/some-postgres
+    username: postgres
+    password: pw
+server:
+  port: 8083

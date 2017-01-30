@@ -1,0 +1,4 @@
+rootProject.name = 'main'
+include 'rss-service'
+include 'orchestrator-service'
+include 'user-service'

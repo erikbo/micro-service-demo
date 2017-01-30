@@ -1,0 +1,99 @@
+group 'microservice-kubernetes-demo'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'docker'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+buildscript {
+    repositories{
+        jcenter()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.3.RELEASE")
+        classpath("se.transmode.gradle:gradle-docker:1.2")
+    }
+}
+
+jar{
+    manifest.attributes("Main-Class": "com.ef.Application")
+}
+
+dependencies {
+    compile()
+
+    compile 'com.rometools:rome:1.7.1'
+
+    compile("org.springframework.boot:spring-boot-starter-web:1.4.3.RELEASE")
+
+    testCompile("junit:junit:4.11")
+    testCompile('org.springframework.boot:spring-boot-starter-test:1.4.3.RELEASE')
+}
+
+task dockerize(type: Docker, dependsOn: build) {
+    applicationName = "rss-service"
+    push = false
+    dockerfile = file("Dockerfile")
+    doFirst {
+        copy {
+            from jar
+            into stageDir
+        }
+    }
+}
+
+
+task createDeploymentTest(type: Exec){
+    commandLine 'kubectl', 'run', 'rss-service', '--image', 'microservice-kubernetes-demo/rss-service:1.0-SNAPSHOT', '--namespace', 'test', '--port', '8081'
+}
+
+task createDeploymentProduction(type: Exec){
+    commandLine 'kubectl', 'run', 'rss-service', '--image', 'microservice-kubernetes-demo/rss-service:1.0-SNAPSHOT', '--namespace', 'production', '--port', '8081'
+}
+
+task createDeployment(dependsOn: [createDeploymentTest, createDeploymentProduction])
+
+task createServiceTest(type: Exec){
+    commandLine 'kubectl', 'expose', 'deployment', 'rss-service', '--namespace', 'test'
+}
+
+task createServiceProduction(type: Exec){
+    commandLine 'kubectl', 'expose', 'deployment', 'rss-service', '--namespace', 'production'
+}
+
+task createService(dependsOn: [createServiceTest, createServiceProduction])
+
+createService.mustRunAfter createDeployment
+
+task deployToKubernetes(dependsOn: [createDeployment, createService])
+
+task deleteDeploymentTest(type: Exec){
+    commandLine 'kubectl', 'delete', 'deployment', 'rss-service', '--namespace', 'test'
+}
+
+task deleteDeploymentProduction(type: Exec){
+    commandLine 'kubectl', 'delete', 'deployment', 'rss-service', '--namespace', 'production'
+}
+
+task deleteServiceTest(type: Exec){
+    commandLine 'kubectl', 'delete', 'service', 'rss-service', '--namespace', 'test'
+}
+
+task deleteServiceProduction(type: Exec){
+    commandLine 'kubectl', 'delete', 'service', 'rss-service', '--namespace', 'production'
+}
+
+task deleteDeployment(dependsOn: [deleteDeploymentTest, deleteDeploymentProduction])
+
+task deleteService(dependsOn: [deleteServiceTest, deleteServiceProduction])
+
+deleteDeployment.mustRunAfter deleteService
+
+task undeployFromKubernetes(dependsOn: [deleteService, deleteDeployment])
