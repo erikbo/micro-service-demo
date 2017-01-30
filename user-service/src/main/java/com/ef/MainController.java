@@ -26,9 +26,6 @@ public class MainController {
     private RestTemplate restTemplate;
 
     @Autowired
-    private Config config;
-
-    @Autowired
     private UserService userService;
 
     @RequestMapping(value = "/users", method = GET)
